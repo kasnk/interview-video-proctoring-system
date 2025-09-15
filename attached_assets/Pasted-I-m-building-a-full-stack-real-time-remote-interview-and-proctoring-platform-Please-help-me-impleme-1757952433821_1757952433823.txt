@@ -1,0 +1,47 @@
+I’m building a full-stack real-time remote interview and proctoring platform. Please help me implement and debug it step-by-step without errors.
+
+### 🔧 Project Overview
+- Interviewer and candidate join a session via WebRTC
+- Socket.IO handles signaling between peers
+- Candidate monitoring runs via TensorFlow.js + MediaPipe FaceMesh
+- Events like `focus_lost`, `user_absent`, and `multiple_faces_detected` are logged
+- Logs are sent to backend to calculate an integrity score
+- A PDF report is generated using PDFKit
+
+### 🧱 Tech Stack
+- Frontend: React (with hooks), WebRTC, Socket.IO client
+- Backend: Node.js, Express, Socket.IO server, PDFKit
+- Monitoring: TensorFlow.js, MediaPipe
+- Database: MongoDB Atlas (optional for storing reports)
+
+### 🗂️ Folder Structure
+- client/
+  - pages/: InterviewPage.jsx, JoinPage.jsx, Dashboard.jsx
+  - hooks/: useMonitoring.js
+  - config.js: contains SIGNALING_SERVER_URL and API_BASE_URL
+- server/
+  - controllers/: reportController.js
+  - routes/: reportRoutes.js
+  - app.js: Express + Socket.IO setup
+- reports/: stores generated PDFs
+
+### ✅ What I Need Help With
+1. Ensure WebRTC connection works between interviewer and candidate
+2. Ensure monitoring runs only for candidate and logs events correctly
+3. Ensure logs are sent to backend before redirect
+4. Ensure backend calculates integrity score and generates PDF
+5. Prevent duplicate report generation or empty logs
+6. Add confirmation logs throughout for debugging
+
+### 🧪 Debugging Expectations
+- Add `console.log()` at every lifecycle stage (frontend and backend)
+- Confirm video stream readiness before detection
+- Confirm logs are populated before sending
+- Confirm backend receives logs and generates report once
+
+### 🛠️ Setup Notes
+- Frontend and backend run locally on ports 3000 and 5000
+- SIGNALING_SERVER_URL and API_BASE_URL point to http://localhost:5000
+- TensorFlow backend is set to `webgl`
+
+Please guide me step-by-step, and help me fix any errors or blank screens immediately. I want this to be modular, traceable, and production-ready.

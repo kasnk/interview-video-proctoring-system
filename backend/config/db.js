@@ -2,11 +2,16 @@ import mongoose from 'mongoose';
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log('MongoDB connected successfully');
+    const mongoUri = process.env.MONGO_URI;
+    if (mongoUri && mongoUri !== 'optional') {
+      await mongoose.connect(mongoUri);
+      console.log('MongoDB connected successfully');
+    } else {
+      console.log('MongoDB connection skipped - running without database');
+    }
   } catch (err) {
     console.error('MongoDB connection failed:', err);
-    process.exit(1);
+    console.log('Continuing without database connection...');
   }
 };
 
