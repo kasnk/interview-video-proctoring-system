@@ -26,7 +26,17 @@ function InterviewPage() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         localVideoRef.current.srcObject = stream;
 
-        peerConnection.current = new RTCPeerConnection();
+        // Configure ICE servers for better connectivity
+        peerConnection.current = new RTCPeerConnection({
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+          ]
+        });
+
+        // Join Socket.IO room for this session
+        console.log(`[WebRTC] Joining session room: ${sessionId} as ${role}`);
+        socket.emit('join-session', { sessionId, role });
 
         stream.getTracks().forEach(track => peerConnection.current.addTrack(track, stream));
 
@@ -41,8 +51,9 @@ function InterviewPage() {
           }
         };
 
-        socket.once('offer', async ({ offer }) => {
-          if (role === 'candidate') {
+        socket.once('offer', async ({ offer, sessionId: receivedSessionId }) => {
+          if (role === 'candidate' && receivedSessionId === sessionId) {
+            console.log(`[WebRTC] Received offer for session: ${receivedSessionId}`);
             await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
             const answer = await peerConnection.current.createAnswer();
             await peerConnection.current.setLocalDescription(answer);
@@ -50,44 +61,50 @@ function InterviewPage() {
           }
         });
 
-        socket.once('answer', async ({ answer }) => {
-          if (role === 'interviewer') {
+        socket.once('answer', async ({ answer, sessionId: receivedSessionId }) => {
+          if (role === 'interviewer' && receivedSessionId === sessionId) {
+            console.log(`[WebRTC] Received answer for session: ${receivedSessionId}`);
             await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
           }
         });
 
-        socket.on('ice-candidate', async ({ candidate }) => {
-          try {
-            await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
-          } catch (err) {
-            console.warn('Failed to add ICE candidate:', err);
+        socket.on('ice-candidate', async ({ candidate, sessionId: receivedSessionId }) => {
+          if (receivedSessionId === sessionId) {
+            try {
+              await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+              console.log(`[WebRTC] ICE candidate added for session: ${receivedSessionId}`);
+            } catch (err) {
+              console.warn(`[WebRTC] Failed to add ICE candidate:`, err);
+            }
           }
         });
 
-        socket.on('session-ended', async () => {
-  console.log(`[Interview] session-ended received for role: ${role}`);
+        socket.on('session-ended', async (receivedSessionId) => {
+          if (receivedSessionId === sessionId) {
+            console.log(`[Interview] session-ended received for session: ${receivedSessionId}, role: ${role}`);
 
-  if (role === 'candidate') {
-    const candidateName = localStorage.getItem('candidateName') || 'Candidate';
-    const logs = logRef.current || [];
+            if (role === 'candidate') {
+              const candidateName = localStorage.getItem('candidateName') || 'Candidate';
+              const logs = logRef.current || [];
 
-    console.log(`[Interview] Candidate sending logs on session-ended`, logs);
+              console.log(`[Interview] Candidate sending logs on session-ended`, logs);
 
-    try {
-      await fetch(`${API_BASE_URL}/report/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ candidateName, sessionId, logs })
-      });
-    } catch (err) {
-      console.error(`[Interview] Failed to send logs on session-ended`, err);
-    }
+              try {
+                await fetch(`${API_BASE_URL}/report/generate`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ candidateName, sessionId, logs })
+                });
+              } catch (err) {
+                console.error(`[Interview] Failed to send logs on session-ended`, err);
+              }
 
-    navigate('/thank-you');
-  } else {
-    navigate(`/report/${sessionId}`);
-  }
-});
+              navigate('/thank-you');
+            } else {
+              navigate(`/report/${sessionId}`);
+            }
+          }
+        });
 
 
 

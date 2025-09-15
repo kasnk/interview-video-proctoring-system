@@ -24,23 +24,40 @@ app.use('/api/session', sessionRoutes);
 app.use('/api/report', reportRoutes);
 
 io.on('connection', socket => {
+  console.log(`[Socket] Client connected: ${socket.id}`);
+
+  socket.on('join-session', ({ sessionId, role }) => {
+    console.log(`[Socket] ${role} joining session: ${sessionId}`);
+    socket.join(sessionId);
+    socket.sessionId = sessionId;
+    socket.role = role;
+  });
+
   socket.on('offer', ({ offer, sessionId }) => {
-    socket.broadcast.emit('offer', { offer, sessionId });
+    console.log(`[Socket] Offer received for session: ${sessionId}`);
+    socket.to(sessionId).emit('offer', { offer, sessionId });
   });
 
   socket.on('answer', ({ answer, sessionId }) => {
-    socket.broadcast.emit('answer', { answer, sessionId });
+    console.log(`[Socket] Answer received for session: ${sessionId}`);
+    socket.to(sessionId).emit('answer', { answer, sessionId });
   });
 
   socket.on('ice-candidate', ({ candidate, sessionId }) => {
-    socket.broadcast.emit('ice-candidate', { candidate, sessionId });
+    console.log(`[Socket] ICE candidate for session: ${sessionId}`);
+    socket.to(sessionId).emit('ice-candidate', { candidate, sessionId });
   });
 
   socket.on('session-ended', sessionId => {
-    io.emit('session-ended', sessionId);
+    console.log(`[Socket] Session ended: ${sessionId}`);
+    io.to(sessionId).emit('session-ended', sessionId);
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`[Socket] Client disconnected: ${socket.id}`);
   });
 });
 
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, 'localhost', () => console.log(`Server running on localhost:${PORT}`));
+server.listen(PORT, '0.0.0.0', () => console.log(`Server running on 0.0.0.0:${PORT}`));
