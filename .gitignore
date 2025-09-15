@@ -40,3 +40,6 @@ Thumbs.db
 
 # Reports (generated content)
 backend/reports/*.pdf
+
+.replit/
+.replit.md

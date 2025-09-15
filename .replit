@@ -54,10 +54,6 @@ exposeLocalhost = true
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 36963
-externalPort = 3002
-
 [deployment]
 deploymentTarget = "autoscale"
 run = ["bash", "-c", "cd backend && node server.js & cd ../frontend && npm run dev"]
