@@ -16,6 +16,10 @@ connectDB(); // Connect to MongoDB Atlas
 
 app.use(cors());
 app.use(express.json());
+
+// Serve PDF reports statically
+app.use('/reports', express.static('reports'));
+
 app.use('/api/session', sessionRoutes);
 app.use('/api/report', reportRoutes);
 
