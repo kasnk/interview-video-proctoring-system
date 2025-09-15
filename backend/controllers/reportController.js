@@ -20,11 +20,12 @@ export const generateReport = async (req, res) => {
 
     const focusLost = logs.filter(e => e.type === 'focus_lost').length;
     const absence = logs.filter(e => e.type === 'user_absent').length;
-    const suspicious = logs.filter(e => e.type === 'multiple_faces_detected').length;
+    const multipleFaces = logs.filter(e => e.type === 'multiple_faces_detected').length;
+    const suspiciousObjects = logs.filter(e => e.type === 'suspicious_object_detected').length;
 
-    console.log(`[Report] Event counts — Focus Lost: ${focusLost}, Absence: ${absence}, Suspicious: ${suspicious}`);
+    console.log(`[Report] Event counts — Focus Lost: ${focusLost}, Absence: ${absence}, Multiple Faces: ${multipleFaces}, Suspicious Objects: ${suspiciousObjects}`);
 
-    const integrityScore = Math.max(0, 100 - (focusLost * 2 + absence * 3 + suspicious * 5));
+    const integrityScore = Math.max(0, 100 - (focusLost * 2 + absence * 3 + multipleFaces * 5 + suspiciousObjects * 4));
     console.log(`[Report] Calculated Integrity Score: ${integrityScore}`);
 
     const doc = new PDFDocument();
@@ -38,7 +39,8 @@ export const generateReport = async (req, res) => {
     doc.text(`Interview Duration: ${logs.length > 0 ? logs[logs.length - 1].timestamp : 'N/A'}`);
     doc.text(`Focus Lost Events: ${focusLost}`);
     doc.text(`Absence Events: ${absence}`);
-    doc.text(`Suspicious Events: ${suspicious}`);
+    doc.text(`Multiple Faces Events: ${multipleFaces}`);
+    doc.text(`Suspicious Objects Events: ${suspiciousObjects}`);
     doc.text(`Final Integrity Score: ${integrityScore}`);
     doc.end();
 

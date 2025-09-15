@@ -49,7 +49,7 @@ function Dashboard() {
       {sessionId && (
         <div style={{ marginTop: '1rem' }}>
           <p><strong>Share this link with candidate:</strong></p>
-          <code>http://localhost:5173/join/{sessionId}</code>
+          <code>https://200c5190-9526-41ac-8557-aa4fd1d7b772-00-3kqlw47x0r028.sisko.replit.dev/join/{sessionId}</code>
           <br />
           <button onClick={handleJoinAsInterviewer}>Start Interview as Interviewer</button>
         </div>

@@ -32,7 +32,7 @@ function ReportPage() {
         <>
           <p><strong>Integrity Score:</strong> {score}</p>
           <a
-            href={`http://localhost:5000/reports/${sessionId}.pdf`}
+            href={`https://200c5190-9526-41ac-8557-aa4fd1d7b772-00-3kqlw47x0r028.sisko.replit.dev:3001/reports/${sessionId}.pdf`}
             target="_blank"
             rel="noopener noreferrer"
           >

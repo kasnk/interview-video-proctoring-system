@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import '@tensorflow/tfjs-backend-webgl';
 import * as tf from '@tensorflow/tfjs';
 import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
+import * as cocoSsd from '@tensorflow-models/coco-ssd';
 
 export default function useMonitoring(videoRef, sessionId) {
   const logRef = useRef([]);
@@ -17,6 +18,7 @@ export default function useMonitoring(videoRef, sessionId) {
     console.log(`[Monitoring] Initialized for candidate: ${candidateName}, session: ${sessionId}`);
 
     let detector;
+    let objectDetector;
     let lastEvent = null;
     let absenceStart = null;
 
@@ -37,6 +39,10 @@ const loadModel = async () => {
       }
     );
     console.log(`[Monitoring] Face detector created successfully`);
+
+    console.log(`[Monitoring] Loading COCO-SSD object detector...`);
+    objectDetector = await cocoSsd.load();
+    console.log(`[Monitoring] COCO-SSD object detector loaded successfully`);
 
     // ✅ Add startup delay to allow webcam to stabilize
     setTimeout(() => {
@@ -63,6 +69,18 @@ const loadModel = async () => {
       try {
         const faces = await detector.estimateFaces(videoRef.current);
         const validFaces = faces.filter(face => face.keypoints?.length > 0);        const now = new Date().toISOString();
+
+        // Object detection for suspicious items
+        const objects = await objectDetector.detect(videoRef.current);
+        const suspiciousObjects = objects.filter(obj => 
+          ['cell phone', 'book', 'laptop', 'tablet', 'mouse', 'keyboard'].includes(obj.class.toLowerCase()) && 
+          obj.score > 0.5
+        );
+
+        suspiciousObjects.forEach(obj => {
+          console.log(`[Monitoring] Suspicious object detected: ${obj.class} (confidence: ${obj.score.toFixed(2)})`);
+          logEvent('suspicious_object_detected', now, { object: obj.class, confidence: obj.score });
+        });
 
         if (validFaces.length === 0) {
           if (!absenceStart) {
@@ -97,9 +115,10 @@ const loadModel = async () => {
       requestAnimationFrame(detectLoop);
     };
 
-    const logEvent = (type, timestamp) => {
-      logRef.current.push({ type, timestamp });
-      console.log(`[Monitoring] Event logged: ${type} at ${timestamp}`);
+    const logEvent = (type, timestamp, extra = {}) => {
+      const event = { type, timestamp, ...extra };
+      logRef.current.push(event);
+      console.log(`[Monitoring] Event logged: ${type} at ${timestamp}`, extra);
     };
 
     loadModel();
